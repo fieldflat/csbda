@@ -1,0 +1,15 @@
+key_params:
+  d_length: 128
+  blocks:
+    block1:
+      content: "10011"
+      quantity: 5
+    block2:
+      content: "1101001"
+      quantity: 3
+    block3:
+      content: "1111011"
+      quantity: 4
+    block4:
+      content: "101010111"
+      quantity: 5
