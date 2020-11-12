@@ -50,7 +50,7 @@ def generate_primes(e: int, d: int) -> (int, int, bool):
 
   return p, k, ok
 
-def xgcd(a, b):
+def xgcd(a: int, b: int):
     x0, y0, x1, y1 = 1, 0, 0, 1
     while b != 0:
         q, a, b = a // b, b, a % b
@@ -58,32 +58,67 @@ def xgcd(a, b):
         y0, y1 = y1, y0 - q * y1
     return a, x0, y0
 
-def modinv(a, m):
+def modinv(a: int, m: int):
     g, x, y = xgcd(a, m)
     if g != 1:
         raise Exception('modular inverse does not exist')
     else:
         return x % m
 
+def decryption_csbda(c: int, d_block: list, n: int) -> (int):
+  # 結果格納用
+  memory = {}
+
+  m = 1
+  for b in d_block:
+    # memoryに存在する場合は、
+    # (1) len(b)回 2倍算を行い，
+    # (2) memory[b]を書ける(そしてmod nをとる)
+    if b in memory:
+      for _ in b:
+        m *= m
+        m %= n
+      m *= memory[b]
+      m %= n
+    else:
+      t = 1
+      for i in b:
+        i = int(i)
+        t *= t
+        t %= n
+        if i == 1:
+          t *= c
+          t %= n
+      memory[b] = t
+
+      for _ in b:
+        m *= m
+        m %= n
+      m *= memory[b]
+      m %= n
+  
+  return m
+
+
 if __name__ == '__main__':
   ok = False
   while not ok:
-    block_dp, dp_length = generate_block_of_csbda('key_params1.yml')
+    block_dp, dp_length = generate_block_of_csbda('key_params256_1.yml')
     dp, block_dp = generate_key_of_csbda(block_dp)
     p, kp, ok = generate_primes(E, dp)
-    print((E*dp)%(p-1))
 
   ok = False
   while not ok:
-    block_dq, dq_length = generate_block_of_csbda('key_params1.yml')
+    block_dq, dq_length = generate_block_of_csbda('key_params256_1.yml')
     dq, block_dq = generate_key_of_csbda(block_dq)
     q, kq, ok = generate_primes(E, dq)
-    print((E*dq)%(q-1))
 
   n = p*q
   phi_n = (p-1)*(q-1)
   d = modinv(E, phi_n)
+  q_inv = modinv(q, p)
 
+  print("============== parameters ==============")
   print("e \t= {0}".format(E))
   print("dp \t= {0}".format(dp))
   print("kp \t= {0}".format(kp))
@@ -97,3 +132,13 @@ if __name__ == '__main__':
   print("e*dp % (p-1)\t= {0}".format((E*dp) % (p-1)))
   print("e*dq % (q-1)\t= {0}".format((E*dq) % (q-1)))
   print("e*d % ((p-1)(q-1))\t= {0}".format((E*d) % phi_n))
+  print("============== results ==============")
+
+  c = random.randint(1, n)
+  mp = decryption_csbda(c, block_dp, p)
+  mq = decryption_csbda(c, block_dq, q)
+  print("c \t= {0}".format(c))
+  print("mp \t= {0}".format(mp))
+  print("mq \t= {0}".format(mq))
+  print("m (crt) \t= {0}".format(mq+q*(q_inv*(mp-mq)%p)))
+  print("m (real) \t= {0}".format(pow(c, d, n)))
