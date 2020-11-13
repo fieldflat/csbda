@@ -89,6 +89,7 @@ def decryption_csbda(c: int, d_block: list, n: int) -> (int):
         if i == 1:
           t *= c
           t %= n
+
       memory[b] = t
 
       for _ in b:
@@ -96,7 +97,59 @@ def decryption_csbda(c: int, d_block: list, n: int) -> (int):
         m %= n
       m *= memory[b]
       m %= n
+
+  return m
+
+def split_sliding_window_block(d_block: list, w: int) -> (list):
+  d_string = ''.join(d_block)
+  ret = []
+
+  while len(d_string) > w:
+    if d_string[0] == '0':
+      ret = ret + ['0']
+      d_string = d_string[1:]
+    else:
+      k = min(w-1, len(d_string))
+      for i in range(k, -1, -1):
+        if d_string[i] == '1':
+          ret = ret + [d_string[:i+1]]
+          d_string = d_string[i+1:]
+          break
   
+  return ret
+
+def decryption_sliding_window(c: int, d_block: list, n: int) -> (int):
+  # 結果格納用
+  memory = {}
+
+  m = 1
+  for b in d_block:
+    # memoryに存在する場合は、
+    # (1) len(b)回 2倍算を行い，
+    # (2) memory[b]を書ける(そしてmod nをとる)
+    if b in memory:
+      for _ in b:
+        m *= m
+        m %= n
+      m *= memory[b]
+      m %= n
+    else:
+      t = 1
+      for i in b:
+        i = int(i)
+        t *= t
+        t %= n
+        if i == 1:
+          t *= c
+          t %= n
+      memory[b] = t
+
+      for _ in b:
+        m *= m
+        m %= n
+      m *= memory[b]
+      m %= n
+
   return m
 
 
@@ -137,8 +190,22 @@ if __name__ == '__main__':
   c = random.randint(1, n)
   mp = decryption_csbda(c, block_dp, p)
   mq = decryption_csbda(c, block_dq, q)
+  m = mq+q*(q_inv*(mp-mq) % p)
   print("c \t= {0}".format(c))
   print("mp \t= {0}".format(mp))
   print("mq \t= {0}".format(mq))
-  print("m (crt) \t= {0}".format(mq+q*(q_inv*(mp-mq)%p)))
+  print("m (crt) \t= {0}".format(m))
+  print("m (real) \t= {0}".format(pow(c, d, n)))
+
+  w = 5
+  block_dp = split_sliding_window_block(block_dp, w)
+  block_dq = split_sliding_window_block(block_dq, w)
+  
+  mp = decryption_sliding_window(c, block_dp, p)
+  mq = decryption_sliding_window(c, block_dq, q)
+  m = mq+q*(q_inv*(mp-mq) % p)
+  print("c \t= {0}".format(c))
+  print("mp \t= {0}".format(mp))
+  print("mq \t= {0}".format(mq))
+  print("m (crt) \t= {0}".format(m))
   print("m (real) \t= {0}".format(pow(c, d, n)))
