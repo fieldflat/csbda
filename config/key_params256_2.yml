@@ -1,0 +1,18 @@
+key_params:
+  d_length: 256
+  blocks:
+    block1: # 2 * 5 = 10
+      content: "10"
+      quantity: 5
+    block2: # 8 * 2 = 16
+      content: "10000001"
+      quantity: 2
+    block3: # 13 * 3 = 39
+      content: "1000000100001"
+      quantity: 3
+    block4: # 17 * 6 = 102
+      content: "10000001000010001"
+      quantity: 6
+    block5: # 22 * 4 = 88
+      content: "1000000100001000100001"
+      quantity: 4

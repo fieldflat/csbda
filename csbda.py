@@ -13,8 +13,11 @@ E = 2**16 + 1
 # ========================
 csbda_square_count_list = []
 csbda_mult_count_list = []
-sliding_square_count_list = []
-sliding_mult_count_list = []
+csbda_total_mult_count_list = []
+csbda_total_mod_count_list = []
+# sliding_square_count_list = []
+# sliding_mult_count_list = []
+
 
 def generate_block_of_csbda(filename: str) -> (list, int):
   with open('./config/'+filename, 'r') as yml:
@@ -35,17 +38,20 @@ def generate_block_of_csbda(filename: str) -> (list, int):
 
   return block_d, d_length
 
+
 def shuffle_block_d(block_d: list) -> list:
   random.shuffle(block_d)
   while ''.join(block_d)[-1] == '0':
     random.shuffle(block_d)
   return block_d
 
+
 def generate_key_of_csbda(block_d: list) -> (int, list):
   block_d = shuffle_block_d(block_d)
   d_bits_string = '0b'+''.join(block_d)
   d = int(d_bits_string, 2)
   return d, block_d
+
 
 def generate_primes(e: int, d: int) -> (int, int, bool):
   ok = False
@@ -58,6 +64,7 @@ def generate_primes(e: int, d: int) -> (int, int, bool):
 
   return p, k, ok
 
+
 def xgcd(a: int, b: int):
     x0, y0, x1, y1 = 1, 0, 0, 1
     while b != 0:
@@ -66,6 +73,7 @@ def xgcd(a: int, b: int):
         y0, y1 = y1, y0 - q * y1
     return a, x0, y0
 
+
 def modinv(a: int, m: int):
     g, x, y = xgcd(a, m)
     if g != 1:
@@ -73,58 +81,59 @@ def modinv(a: int, m: int):
     else:
         return x % m
 
+
 def decryption_csbda(c: int, d_block: list, n: int) -> (int):
   # 結果格納用
   memory = {}
   mult_count = 0
   square_count = 0
+  mod_count = 0
+
+  set_d_block = set(d_block) - set('0') - set('1')
+  
+  for b in set_d_block:
+    memory[b] = pow(c, int(b, 2), n)
 
   m = 1
   for b in d_block:
-    # memoryに存在する場合は、
-    # (1) len(b)回 2倍算を行い，
-    # (2) memory[b]を書ける(そしてmod nをとる)
     if b in memory:
       for _ in b:
         m *= m
+        if m > n:
+          mod_count += 1
         m %= n
         square_count += 1
       m *= memory[b]
+      if m > n:
+        mod_count += 1
       m %= n
       mult_count += 1
+    elif b == '0':
+      m *= m
+      if m > n:
+        mod_count += 1
+      m %= n
+      square_count += 1
+    elif b == '1':
+      m *= m
+      if m > n:
+        mod_count += 1
+      m %= n
+      m *= c
+      if m > n:
+        mod_count += 1
+      m %= n
+      square_count += 1
+      mult_count += 1
     else:
-      t = 1
-      for i in b:
-        i = int(i)
-        t *= t
-        t %= n
-        square_count += 1
-        if i == 1:
-          t *= c
-          t %= n
-          mult_count += 1
+      raise Exception('csbda error')
 
-      if b != '0' and b != '1':
-        memory[b] = t
-
-      for _ in b:
-        m *= m
-        m %= n
-        square_count += 1
-      if b == '1':
-        m *= c
-        m %= n
-        mult_count += 1
-      elif b != '0':
-        m *= memory[b]
-        m %= n
-        mult_count += 1
-
-  # print("======== csbda ========")
-  # print("square_count: {0}, mult_count = {1}".format(square_count, mult_count))
   csbda_square_count_list.append(square_count)
   csbda_mult_count_list.append(mult_count)
+  csbda_total_mult_count_list.append(square_count + mult_count)
+  csbda_total_mod_count_list.append(mod_count)
   return m
+
 
 def split_sliding_window_block(d_block: list, w: int) -> (list):
   d_string = ''.join(d_block)
@@ -143,74 +152,19 @@ def split_sliding_window_block(d_block: list, w: int) -> (list):
           break
   return ret
 
-def decryption_sliding_window(c: int, d_block: list, n: int) -> (int):
-  # 結果格納用
-  memory = {}
-  square_count = 0
-  mult_count = 0
-
-  m = 1
-  for b in d_block:
-    # memoryに存在する場合は、
-    # (1) len(b)回 2倍算を行い，
-    # (2) memory[b]を書ける(そしてmod nをとる)
-    if b in memory:
-      for _ in b:
-        m *= m
-        m %= n
-        square_count += 1
-      m *= memory[b]
-      m %= n
-      mult_count += 1
-    else:
-      t = 1
-      for i in b:
-        i = int(i)
-        t *= t
-        t %= n
-        square_count += 1
-        if i == 1:
-          t *= c
-          t %= n
-          mult_count += 1
-
-      if b != '0' and b != '1':
-        memory[b] = t
-
-      for _ in b:
-        m *= m
-        m %= n
-        square_count += 1
-      if b == '1':
-        m *= c
-        m %= n
-        mult_count += 1
-      elif b != '0':
-        m *= memory[b]
-        m %= n
-        mult_count += 1
-
-  # print("======== sliding-window ========")
-  # print("square_count: {0}, mult_count = {1}".format(square_count, mult_count))
-  sliding_square_count_list.append(square_count)
-  sliding_mult_count_list.append(mult_count)
-
-  return m
-
-
 if __name__ == '__main__':
 
-  for i in range(100):
+  for i in range(1):
 
     ok = False
     while not ok:
-      block_dp, dp_length = generate_block_of_csbda('key_params256_1.yml')
+      block_dp, dp_length = generate_block_of_csbda('key_params256_2.yml')
       dp, block_dp = generate_key_of_csbda(block_dp)
       p, kp, ok = generate_primes(E, dp)
 
     ok = False
     while not ok:
-      block_dq, dq_length = generate_block_of_csbda('key_params256_1.yml')
+      block_dq, dq_length = generate_block_of_csbda('key_params256_2.yml')
       dq, block_dq = generate_key_of_csbda(block_dq)
       q, kq, ok = generate_primes(E, dq)
 
@@ -245,20 +199,29 @@ if __name__ == '__main__':
     print("m (crt) \t= {0}".format(m))
     print("m (real) \t= {0}".format(pow(c, d, n)))
 
-    w = 4
-    block_dp = split_sliding_window_block(block_dp, w)
-    block_dq = split_sliding_window_block(block_dq, w)
-    
-    mp = decryption_sliding_window(c, block_dp, p)
-    mq = decryption_sliding_window(c, block_dq, q)
-    m = mq+q*(q_inv*(mp-mq) % p)
-    print("c \t= {0}".format(c))
-    print("mp \t= {0}".format(mp))
-    print("mq \t= {0}".format(mq))
-    print("m (crt) \t= {0}".format(m))
-    print("m (real) \t= {0}".format(pow(c, d, n)))
+  #   w = 4
+  #   block_dp = split_sliding_window_block(block_dp, w)
+  #   block_dq = split_sliding_window_block(block_dq, w)
 
-  print("csbda square count: {0}".format(sum(csbda_square_count_list)/len(csbda_square_count_list)))
-  print("csbda mult count: {0}".format(sum(csbda_mult_count_list)/len(csbda_mult_count_list)))
-  print("sliding window square count: {0}".format(sum(sliding_square_count_list)/len(sliding_square_count_list)))
-  print("sliding window mult count: {0}".format(sum(sliding_mult_count_list)/len(sliding_mult_count_list)))
+  #   mp = decryption_sliding_window(c, block_dp, p)
+  #   mq = decryption_sliding_window(c, block_dq, q)
+  #   m = mq+q*(q_inv*(mp-mq) % p)
+  #   print("c \t= {0}".format(c))
+  #   print("mp \t= {0}".format(mp))
+  #   print("mq \t= {0}".format(mq))
+  #   print("m (crt) \t= {0}".format(m))
+  #   print("m (real) \t= {0}".format(pow(c, d, n)))
+
+  print("csbda square count: {0}".format(
+      sum(csbda_square_count_list)/len(csbda_square_count_list)))
+  print("csbda mult count: {0}".format(
+      sum(csbda_mult_count_list)/len(csbda_mult_count_list)))
+  print("csbda total mult count: {0}".format(
+      sum(csbda_total_mult_count_list)/len(csbda_total_mult_count_list)))
+  print("csbda total mod count: {0}".format(
+      sum(csbda_total_mod_count_list)/len(csbda_total_mod_count_list)))
+  print('あとは最適化のぶんをたす！')
+  # print("sliding window square count: {0}".format(
+  #     sum(sliding_square_count_list)/len(sliding_square_count_list)))
+  # print("sliding window mult count: {0}".format(
+  #     sum(sliding_mult_count_list)/len(sliding_mult_count_list)))

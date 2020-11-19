@@ -1,18 +1,18 @@
 key_params:
   d_length: 256
   blocks:
-    block1:
+    block1: # 8*5=40
       content: "10011001"
       quantity: 5
-    block2:
+    block2: # 10*3=30
       content: "1110101001"
       quantity: 3
-    block3:
+    block3: # 9*6=54
       content: "111101111"
       quantity: 6
-    block4:
+    block4: # 11*5=55
       content: "10101011101"
       quantity: 5
-    block5:
+    block5: # 15*5=75
       content: "110110101011101"
       quantity: 5
