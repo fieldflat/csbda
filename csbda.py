@@ -41,7 +41,7 @@ def generate_block_of_csbda(filename: str) -> (list, int):
 
 def shuffle_block_d(block_d: list) -> list:
   random.shuffle(block_d)
-  while ''.join(block_d)[-1] == '0':
+  while ''.join(block_d)[-1] == '0' or ''.join(block_d)[0] == '0':
     random.shuffle(block_d)
   return block_d
 
@@ -93,6 +93,9 @@ def decryption_csbda(c: int, d_block: list, n: int) -> (int):
   
   for b in set_d_block:
     memory[b] = pow(c, int(b, 2), n)
+  
+  print("============  csbda  ==============")
+  print("first block is {0}".format(d_block[0]))
 
   m = 1
   for b in d_block:
@@ -127,6 +130,12 @@ def decryption_csbda(c: int, d_block: list, n: int) -> (int):
       mult_count += 1
     else:
       raise Exception('csbda error')
+  
+  print("square count is {0}".format(square_count))
+  print("mult count is {0}".format(mult_count))
+  print("totla mult count is {0}".format(square_count + mult_count))
+  print("mod count is {0}".format(mod_count))
+  print("============   end   ==============")
 
   csbda_square_count_list.append(square_count)
   csbda_mult_count_list.append(mult_count)
@@ -154,17 +163,21 @@ def split_sliding_window_block(d_block: list, w: int) -> (list):
 
 if __name__ == '__main__':
 
-  for i in range(1):
+  filename = 'key_params256_4.yml'
+  with open('./config/'+filename, 'r') as yml:
+    config = yaml.load(yml, Loader=yaml.FullLoader)
 
+  for i in range(100):
+    print('{0}回目'.format(i))
     ok = False
     while not ok:
-      block_dp, dp_length = generate_block_of_csbda('key_params256_2.yml')
+      block_dp, dp_length = generate_block_of_csbda(filename)
       dp, block_dp = generate_key_of_csbda(block_dp)
       p, kp, ok = generate_primes(E, dp)
 
     ok = False
     while not ok:
-      block_dq, dq_length = generate_block_of_csbda('key_params256_2.yml')
+      block_dq, dq_length = generate_block_of_csbda(filename)
       dq, block_dq = generate_key_of_csbda(block_dq)
       q, kq, ok = generate_primes(E, dq)
 
@@ -173,55 +186,38 @@ if __name__ == '__main__':
     d = modinv(E, phi_n)
     q_inv = modinv(q, p)
 
-    print("============== parameters ==============")
-    print("e \t= {0}".format(E))
-    print("dp \t= {0}".format(dp))
-    print("kp \t= {0}".format(kp))
-    print("dq \t= {0}".format(dq))
-    print("kq \t= {0}".format(kq))
-    print("p \t= {0}".format(p))
-    print("q \t= {0}".format(q))
-    print("n \t= {0}".format(n))
-    print("phi_n \t= {0}".format(phi_n))
-    print("d \t= {0}".format(d))
-    print("e*dp % (p-1)\t= {0}".format((E*dp) % (p-1)))
-    print("e*dq % (q-1)\t= {0}".format((E*dq) % (q-1)))
-    print("e*d % ((p-1)(q-1))\t= {0}".format((E*d) % phi_n))
-    print("============== results ==============")
+    # print("============== parameters ==============")
+    # print("e \t= {0}".format(E))
+    # print("dp \t= {0}".format(dp))
+    # print("kp \t= {0}".format(kp))
+    # print("dq \t= {0}".format(dq))
+    # print("kq \t= {0}".format(kq))
+    # print("p \t= {0}".format(p))
+    # print("q \t= {0}".format(q))
+    # print("n \t= {0}".format(n))
+    # print("phi_n \t= {0}".format(phi_n))
+    # print("d \t= {0}".format(d))
+    # print("e*dp % (p-1)\t= {0}".format((E*dp) % (p-1)))
+    # print("e*dq % (q-1)\t= {0}".format((E*dq) % (q-1)))
+    # print("e*d % ((p-1)(q-1))\t= {0}".format((E*d) % phi_n))
+    # print("============== results ==============")
 
     c = random.randint(1, n)
     mp = decryption_csbda(c, block_dp, p)
     mq = decryption_csbda(c, block_dq, q)
     m = mq+q*(q_inv*(mp-mq) % p)
-    print("c \t= {0}".format(c))
-    print("mp \t= {0}".format(mp))
-    print("mq \t= {0}".format(mq))
-    print("m (crt) \t= {0}".format(m))
-    print("m (real) \t= {0}".format(pow(c, d, n)))
+    # print("c \t= {0}".format(c))
+    # print("mp \t= {0}".format(mp))
+    # print("mq \t= {0}".format(mq))
+    # print("m (crt) \t= {0}".format(m))
+    # print("m (real) \t= {0}".format(pow(c, d, n)))
 
-  #   w = 4
-  #   block_dp = split_sliding_window_block(block_dp, w)
-  #   block_dq = split_sliding_window_block(block_dq, w)
-
-  #   mp = decryption_sliding_window(c, block_dp, p)
-  #   mq = decryption_sliding_window(c, block_dq, q)
-  #   m = mq+q*(q_inv*(mp-mq) % p)
-  #   print("c \t= {0}".format(c))
-  #   print("mp \t= {0}".format(mp))
-  #   print("mq \t= {0}".format(mq))
-  #   print("m (crt) \t= {0}".format(m))
-  #   print("m (real) \t= {0}".format(pow(c, d, n)))
-
+  print("=========== result ===========")
   print("csbda square count: {0}".format(
       sum(csbda_square_count_list)/len(csbda_square_count_list)))
   print("csbda mult count: {0}".format(
       sum(csbda_mult_count_list)/len(csbda_mult_count_list)))
   print("csbda total mult count: {0}".format(
-      sum(csbda_total_mult_count_list)/len(csbda_total_mult_count_list)))
+      sum(csbda_total_mult_count_list)/len(csbda_total_mult_count_list) + config['key_params']['pre_mult']))
   print("csbda total mod count: {0}".format(
-      sum(csbda_total_mod_count_list)/len(csbda_total_mod_count_list)))
-  print('あとは最適化のぶんをたす！')
-  # print("sliding window square count: {0}".format(
-  #     sum(sliding_square_count_list)/len(sliding_square_count_list)))
-  # print("sliding window mult count: {0}".format(
-  #     sum(sliding_mult_count_list)/len(sliding_mult_count_list)))
+      sum(csbda_total_mod_count_list)/len(csbda_total_mod_count_list) + + config['key_params']['pre_mod']))

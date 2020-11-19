@@ -16,3 +16,5 @@ key_params:
     block5: # 15*5=75
       content: "110110101011101"
       quantity: 5
+  pre_mult: 5
+  pre_mod: 4

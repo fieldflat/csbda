@@ -9,6 +9,8 @@ mc_count_list = []
 mm_count_list = []
 binary_mm_list = []
 binary_mc_list = []
+mod_count4_list = []
+mult_count4_list = []
 
 # ###########################
 # 以下，鍵生成に使用するメソッド
@@ -20,8 +22,6 @@ binary_mc_list = []
 # 機能：aからbまでのランダムな整数値を返す
 # 返り値：ランダム整数値(a .. b)
 #
-
-
 def generate_c(a, b):
     return random.randint(a, b)
 
@@ -33,8 +33,6 @@ def generate_c(a, b):
 # 返り値：秘密鍵の配列(配列長length)
 #
 # 20200410 make_dの返り値が全て奇数となるように変更！
-
-
 def make_d(length, top_bit, weight):
     if length < top_bit + weight - 1:
         raise Exception
@@ -66,8 +64,6 @@ def make_d(length, top_bit, weight):
 # 機能：2進数形式で格納されているlistの10進数値を返す
 # 返り値：10進数値
 #
-
-
 def change_decimal(list):
     return int(''.join(map(str, list)), 2)
 
@@ -91,8 +87,6 @@ def multiply(x, y, mult_count):
 # 機能：x % yを返す
 # 返り値：x % y, mod_count+1
 #
-
-
 def modulo(x, y, mod_count):
     ans = x % y
     if x > y:
@@ -163,147 +157,13 @@ def mod_equal_minus_1(N, R):
 # 機能：10進数nを2進数に直し，その桁数を返す．
 # 返り値：2進数の桁数
 #
-
-
 def decimal_to_binary_len(n):
     return len(bin(n)[2:])
-
-#
-# 関数：MR
-# 引数：整数T, mod_count, mult_count, N_dash, N, R
-# 機能；モンゴメリ還元
-# 返り値：MR(T)
-#
-
-
-def MR(args):
-
-    tr, mod_count = modulo(args["T"], args["R"],
-                           args["mod_count"])  # tr <= T % R の計算
-    # trn <= (T % R) * N'の計算
-    trn, mult_count = multiply(tr, args["N_dash"], args["mult_count"])
-    # m_1 <= ((T % R) * N') % Rの計算
-    m_1, mod_count = modulo(trn, args["R"], mod_count)
-    mn, mult_count = multiply(m_1, args["N"], mult_count)
-    m_2 = (args["T"] + mn)//args["R"]
-
-    if m_2 <= args["N"]:
-        return m_2, mod_count, mult_count
-    else:
-        return m_2 - args["N"], mod_count+1, mult_count
-
-#
-# 関数：mod_bin
-# 引数：c, d(配列), N, N_dash, R, R_2, d_top_bit, d_length
-# 機能：ModBin法を使用して c^d (mod N)の計算結果と，剰余回数と乗算回数を返す
-# 返り値：計算結果m，mod_count, mult_count
-#
-
-
-def mod_bin(args):
-    # print("c^d % n = {0}**{1} mod {2} を計算します".format(args["c"], args["d"], args["N"]))
-    mr_args = {"mod_count": 0, "mult_count": 0,
-               "N_dash": args["N_dash"], "N": args["N"], "R": args["R"]}
-    mr_args["T"], mr_args["mult_count"] = multiply(
-        args["c"], args["R_2"], mr_args["mult_count"])
-    large_C, mr_args["mod_count"], mr_args["mult_count"] = MR(mr_args)
-    large_M = large_C
-    l = args["d_length"]  # 2進表現の長さを獲得.
-
-    for i in range(args["d_top_bit"], l):
-        mr_args["T"], mr_args["mult_count"] = multiply(
-            large_M, large_M, mr_args["mult_count"])
-        large_M, mr_args["mod_count"], mr_args["mult_count"] = MR(mr_args)
-        if args["d"][i] == 1:
-            mr_args["T"], mr_args["mult_count"] = multiply(
-                large_M, large_C, mr_args["mult_count"])
-            mr_args["T"], mr_args["mod_count"], mr_args["mult_count"] = MR(
-                mr_args)
-            large_M = mr_args["T"]
-    mr_args["T"] = large_M
-    m, mr_args["mod_count"], mr_args["mult_count"] = MR(mr_args)
-    return m, mr_args["mod_count"], mr_args["mult_count"]
-
-
-# #################################
-# 以下，CRT-ModBin法で使用するメソッド
-# #################################
-
-#
-# 関数：egcd
-# 引数：B, n
-# 機能：拡張ユークリッド互助法
-# 返り値：結果
-#
-def egcd(B, n):
-    (x, lastx) = (0, 1)
-    (y, lasty) = (1, 0)
-    while (n != 0):
-        q = B // n
-        (B, n) = (n, B % n)
-        (x, lastx) = (lastx - q*x, x)
-        (y, lasty) = (lasty - q*y, y)
-    return (lastx, lasty, B)
-
-#
-# 関数：egcd
-# 引数：B, n
-# 機能：B*b = 1 (mod n)を満たすbを返す
-# 返り値：b
-#
-
-
-def mod_equal_1_crt(B, n):
-    (inv, _, _) = egcd(B, n)
-    return inv % n
-
-#
-# 関数：crt
-# 引数：
-# 機能：CRT-ModBin法において，c^d (mod N)
-# 返り値：c^d (mod N)の計算結果
-#
-
-
-def crt(args):
-    mod_count = 0
-    mult_count = 0
-
-    args["c"], mod_count = modulo(c, args["p"], mod_count)
-    args["d"] = args["d_p_list"]
-    args["N"] = args["p"]
-    args["N_dash"] = args["pN_dash"]
-    args["R"] = args["pR"]
-    args["R_2"] = args["pR_2"]
-    args["d_top_bit"] = args["dp_top_bit"]
-    args["d_length"] = args["dp_length"]
-    m_p, mod_count1, mult_count1 = mod_bin(args)
-
-    args["c"], mod_count = modulo(c, args["q"], mod_count)
-    args["d"] = args["d_q_list"]
-    args["N"] = args["q"]
-    args["N_dash"] = args["qN_dash"]
-    args["R"] = args["qR"]
-    args["R_2"] = args["qR_2"]
-    args["d_top_bit"] = args["dq_top_bit"]
-    args["d_length"] = args["dq_length"]
-    m_q, mod_count2, mult_count2 = mod_bin(args)
-
-    mod_count += (mod_count1 + mod_count2)
-    mult_count += (mult_count1 + mult_count2)
-
-    x, mult_count = multiply(args["q_dash"], (m_p - m_q), mult_count)
-    y, mod_count = modulo(x, args["p"], mod_count)
-    z, mult_count = multiply(y, args["q"], mult_count)
-    ans = m_q + z
-
-    return ans, mod_count, mult_count
 
 
 # #################################
 # 以下，スライディングウィンドウ法で利用するメソッド
 # #################################
-
 def count_leading_zeros(list):
   ans = 0
   for item in list:
@@ -370,41 +230,6 @@ def sliding_window_method(args):
   return a, mod_count, mult_count
 
 
-def crt_with_sliding_window_method(args):
-  mod_count = 0
-  mult_count = 0
-
-  args["c"], mod_count = modulo(c, args["p"], mod_count)
-  args["d"] = args["d_p_list"]
-  args["N"] = args["p"]
-  args["N_dash"] = args["pN_dash"]
-  args["R"] = args["pR"]
-  args["R_2"] = args["pR_2"]
-  args["d_top_bit"] = args["dp_top_bit"]
-  args["d_length"] = args["dp_length"]
-  m_p, mod_count1, mult_count1 = sliding_window_method(args)
-
-  args["c"], mod_count = modulo(c, args["q"], mod_count)
-  args["d"] = args["d_q_list"]
-  args["N"] = args["q"]
-  args["N_dash"] = args["qN_dash"]
-  args["R"] = args["qR"]
-  args["R_2"] = args["qR_2"]
-  args["d_top_bit"] = args["dq_top_bit"]
-  args["d_length"] = args["dq_length"]
-  m_q, mod_count2, mult_count2 = sliding_window_method(args)
-
-  mod_count += (mod_count1 + mod_count2)
-  mult_count += (mult_count1 + mult_count2)
-
-  x, mult_count = multiply(args["q_dash"], (m_p - m_q), mult_count)
-  y, mod_count = modulo(x, args["p"], mod_count)
-  z, mult_count = multiply(y, args["q"], mult_count)
-  ans = m_q + z
-
-  return ans, mod_count, mult_count
-
-
 # #################################
 # 以下，ヒストグラム作成に使用するメソッド
 # #################################
@@ -435,8 +260,6 @@ def plotting(list, title, execute):
 # 機能：10進数を2進数配列にして返す
 # 返り値：2進数配列
 #
-
-
 def binary_d(d):
     array_d = []
     while(1):
@@ -446,7 +269,6 @@ def binary_d(d):
             break
     array_d.reverse()
     return array_d
-
 
 #
 # メイン関数
@@ -503,18 +325,8 @@ if __name__ == '__main__':
     R_2 = R*R % N
     N_dash = mod_equal_minus_1(N, R)
 
-    # CRT-ModBin法で使用する定数
-    pR = 2 ** decimal_to_binary_len(p)
-    pR_2 = pR*pR % p
-    pN_dash = mod_equal_minus_1(p, pR)
-    qR = 2 ** decimal_to_binary_len(q)
-    qR_2 = qR*qR % q
-    qN_dash = mod_equal_minus_1(q, qR)
-    p_list = binary_d(p)
-    q_list = binary_d(q)
-
     # sliding-window幅
-    w = 4
+    w = 5
 
     correct = 0
     sum_of_mod_count2 = 0
@@ -552,32 +364,7 @@ if __name__ == '__main__':
         algo_args["c"] = c
         algo_args["d"] = d
         algo_args["N"] = N
-        algo_args["R"] = R
-        algo_args["R_2"] = R_2
-        algo_args["N_dash"] = N_dash
         algo_args["d_length"] = d_length
-        algo_args["d_top_bit"] = d_top_bit
-        algo_args["pN_dash"] = pN_dash
-        algo_args["qN_dash"] = qN_dash
-        algo_args["pR"] = pR
-        algo_args["pR_2"] = pR_2
-        algo_args["qR"] = qR
-        algo_args["qR_2"] = qR_2
-
-        #
-        # あらかじめ計算しておく部分
-        #
-        algo_args["p"] = p
-        algo_args["q"] = q
-        algo_args["d_p"] = d_num % (p-1)
-        algo_args["d_q"] = d_num % (q-1)
-        algo_args["q_dash"] = mod_equal_1_crt(q, p)
-        algo_args["d_p_list"] = binary_d(algo_args["d_p"])
-        algo_args["d_q_list"] = binary_d(algo_args["d_q"])
-        algo_args["dp_top_bit"] = 1
-        algo_args["dp_length"] = len(algo_args["d_p_list"])
-        algo_args["dq_top_bit"] = 1
-        algo_args["dq_length"] = len(algo_args["d_q_list"])
 
         #
         # sliding window 法
@@ -586,15 +373,8 @@ if __name__ == '__main__':
         m4, mod_count4, mult_count4 = sliding_window_method(algo_args)
         print('m4={0}'.format(m4))
         print('mod_count4={0} | mult_count4={1}'.format(mod_count4, mult_count4))
-        sliding_window_method_list.append(mod_count4)
+        mod_count4_list.append(mod_count4)
+        mult_count4_list.append(mult_count4)
 
-        #
-        # crt with sliding window 法
-        #
-        # algo_args["w"] = w
-        # m5, mod_count5, mult_count5 = crt_with_sliding_window_method(algo_args)
-        # print('正しい解={0}'.format(pow(c, d_num, N)))
-        # print('m5={0}'.format(m5))
-        # print('mod_count5={0} | mult_count5={1}'.format(
-        #     mod_count5, mult_count5))
-        # crt_with_sliding_window_method_list.append(mod_count5)
+    print('mod_coun4の平均: {0}'.format(sum(mod_count4_list)/len(mod_count4_list)))
+    print('mult_coun4の平均: {0}'.format(sum(mult_count4_list)/len(mult_count4_list)))

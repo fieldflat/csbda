@@ -1,0 +1,25 @@
+key_params:
+  d_length: 256
+  blocks:
+    block1: # 2 * 2 = 4
+      content: "10"
+      quantity: 2
+      comment: "cを2倍算(times: 1)"
+    block2: # 4 * 3 = 12
+      content: "1001"
+      quantity: 3
+      comment: "block1を二倍算、二倍算、cを乗算(times: 3)"
+    block3: # 5 * 3 = 15
+      content: "10110"
+      quantity: 3
+      comment: "block2にblock1を乗算、二倍算(times: 2)"
+    block4: # 7 * 8 = 56
+      content: "1111101"
+      quantity: 8
+      comment: "block3にblock2を乗算、二倍算、二倍算、cを乗算(times: 4)"
+    block5: # 15 * 11 = 165
+      content: "100100110000001"
+      quantity: 11
+      comment: "block4にblock3を乗算、7回二倍算、cを乗算(times: 9)"
+  pre_mult: 19
+  pre_mod: 19

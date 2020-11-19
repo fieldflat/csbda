@@ -13,3 +13,5 @@ key_params:
     block4:
       content: "101010111"
       quantity: 5
+  pre_mult: 5
+  pre_mod: 4
