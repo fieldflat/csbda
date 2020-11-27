@@ -133,7 +133,7 @@ def decryption_csbda(c: int, d_block: list, n: int) -> (int):
   
   print("square count is {0}".format(square_count))
   print("mult count is {0}".format(mult_count))
-  print("totla mult count is {0}".format(square_count + mult_count))
+  print("total mult count is {0}".format(square_count + mult_count))
   print("mod count is {0}".format(mod_count))
   print("============   end   ==============")
 

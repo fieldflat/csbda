@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import csv
 from scipy.special import comb
+from generate_dp import generate_dp
 
 mc_count_list = []
 mm_count_list = []
@@ -201,6 +202,7 @@ def sliding_window_method(args):
     c_dict[2*i+1], mod_count = modulo(tmp, args["N"], mod_count)
   print('事前計算部分のmod_count = {0}'.format(mod_count))
   print('事前計算部分のmult_count = {0}'.format(mult_count))
+  print('dの最初の部分: {0}'.format(args["d"][:args["w"]+1]))
   i = 0
   while i <= args["d_length"]-1:
     clz = count_leading_zeros(args["d"][i:])
@@ -326,7 +328,7 @@ if __name__ == '__main__':
     N_dash = mod_equal_minus_1(N, R)
 
     # sliding-window幅
-    w = 5
+    w = 4
 
     correct = 0
     sum_of_mod_count2 = 0
@@ -353,6 +355,7 @@ if __name__ == '__main__':
         # 秘密鍵の作成(2進数)
         d = make_d(d_length, d_top_bit, d_weight)
         d_num = change_decimal(d)
+        # d, d_num, kp, _ = generate_dp(2**16+1, d_length)
 
         print('\n\n************* {0}回目 ***************'.format(i+1))
         print(
